@@ -1,4 +1,4 @@
-# NE CSC climgrid
+# [NE CSC climgrid][climgrid]
 
 Scripts for cleaning climgrid data
 
