@@ -1,0 +1,12 @@
+version: '2.1'
+services:
+  # TODO: this should work, but is failing on my linux machine
+#   worker:
+    # volumes:
+      # - .:/opt/climgrid
+  redis:
+    ports:
+      - "6379:6379"
+  postgres:
+    ports:
+      - "5432:5432"

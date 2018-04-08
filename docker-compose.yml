@@ -1,0 +1,20 @@
+version: '2.1'
+services:
+  worker:
+    build: .
+    environment:
+      - REDIS_URI=redis://redis:6379/0
+      - POSTGRESQL_URI=postgresql+psycopg2://climgrid:climgrid@postgres:5432/precipitation
+      - TARBALL_URI=ftp://ftp.ncdc.noaa.gov/pub/data/climgrid/
+    links:
+      - redis
+  redis:
+    image: redis:alpine
+  postgres:
+      image: postgres
+      environment:
+        POSTGRES_USER: climgrid
+        POSTGRES_PASSWORD: climgrid
+        POSTGRES_DB: precipitation
+      expose:
+        - 5432

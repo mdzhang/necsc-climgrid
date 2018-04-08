@@ -46,8 +46,7 @@ cloud-psql:
 
 CI_BUILD_REF ?= $(shell git rev-parse --verify HEAD)
 CONTAINER_REGISTRY ?= localhost:4444
-CONTAINER_NAME_BASE = ${APP_NAME}
-# ${CONTAINER_REGISTRY}/${APP_NAME}
+CONTAINER_NAME_BASE = ${CONTAINER_REGISTRY}/${APP_NAME}
 
 ##################################
 # Docker container management
@@ -63,6 +62,9 @@ docker-build:
 docker-publish:
 	docker push ${CONTAINER_NAME_BASE}:${CI_BUILD_REF}
 	docker push ${CONTAINER_NAME_BASE}:latest
+
+docker-run:
+	docker run -it --rm ${CONTAINER_NAME_BASE}:${CI_BUILD_REF} /bin/bash
 
 ###################################
 # Helm/Kubernetes commands
@@ -95,7 +97,7 @@ helm-upgrade:
 		./ops/charts/${APP_NAME}
 
 helm-drop-all:
-	helm ls | tail -n+2 | awk '{print $$1}' | xargs helm delete
+	helm ls | tail -n+2 | awk '{print $$1}' | xargs helm delete --purge
 
 helm-status:
 	helm status ${RELEASE_NAME}

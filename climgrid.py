@@ -36,7 +36,7 @@ CELERY_BROKER_BACKEND = os.getenv('CELERY_BROKER_BACKEND', REDIS_URI)
 
 engine = sa.create_engine(SQLALCHEMY_DB_URI)
 
-app = Celery(
+celery = Celery(
     'climgrid',
     broker=CELERY_BROKER_BACKEND,
     result_backend=CELERY_RESULTS_BACKEND)
@@ -241,7 +241,7 @@ def extract_tarball(tarball_uri: str) -> Iterator[str]:
 ##############################################################################
 
 
-@app.task
+@celery.task
 def etl_pnt(uri: str) -> None:
     """Load the pnt file at the given uri to localhost, then stream to sql db
 
@@ -251,7 +251,7 @@ def etl_pnt(uri: str) -> None:
     copy_df_to_sql_store(load_host_file_to_df(path))
 
 
-@app.task
+@celery.task
 def etl_tarball(uri: str) -> None:
     """Download and unzip tarball, and enqueue resulting files for further
     processing.

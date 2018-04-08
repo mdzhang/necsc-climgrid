@@ -25,7 +25,7 @@ spec:
           image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: Always
           command:
-            - "/usr/bin/celery"
+            - "/usr/local/bin/celery"
           args:
             - "worker"
             - "-A"
@@ -37,7 +37,7 @@ spec:
           livenessProbe:
             exec:
               command:
-                - "/usr/bin/celery"
+                - "/usr/local/bin/celery"
               args:
                 - "status"
                 - "-A"
@@ -51,7 +51,7 @@ spec:
           readinessProbe:
             exec:
               command:
-                - "/usr/bin/celery"
+                - "/usr/local/bin/celery"
               args:
                 - "status"
                 - "-A"
@@ -72,12 +72,12 @@ spec:
             - name: PG_USER
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.db.cloudsql.secrets.credentials.name }}
+                  name: cloudsql-db-credentials
                   key: username
             - name: PG_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.db.cloudsql.secrets.credentials.name }}
+                  name: cloudsql-db-credentials
                   key: password
             - name: POSTGRESQL_URI
               # Because the proxy runs in a second container in the same pod,
@@ -98,4 +98,4 @@ spec:
       volumes:
         - name: cloudsql-instance-credentials
           secret:
-            secretName: {{ .Values.db.cloudsql.secrets.credentials.name }}
+            secretName: cloudsql-instance-credentials

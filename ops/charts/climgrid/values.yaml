@@ -34,6 +34,3 @@ redis:
 db:
   cloudsql:
     instanceConnectionName: mdzhang-dev:us-central1:mz-climgrid-2
-    secrets:
-      credentials:
-        name: cloudsql-instance-credentials

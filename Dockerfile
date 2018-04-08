@@ -14,3 +14,5 @@ ARG commit
 LABEL commit="$commit"
 
 ENV PYTHONPATH /opt/climgrid
+
+CMD ["/usr/local/bin/celery", "worker", "-A", "climgrid", "--loglevel=info"]
