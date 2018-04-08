@@ -3,14 +3,14 @@
 ##
 image:
   registry: localhost:4444
-  repository: postalservice
+  repository: climgrid
   tag: "latest"
 
 ## Configuration values for Climgrid Worker components.
 ##
 worker:
   component: worker
-  cmd: celery multi -A climgrid -l info
+  cmd: celery multi -A climgrid -l info 4 -c 20 --autoscale=15,4
 
   ## Number of replicas.
   ##
@@ -21,7 +21,7 @@ worker:
   ##
   resources:
     requests:
-      cpu: "100m"
+      cpu: 4
       memory: "512Mi"
 
 ## Configuration values for the redis dependency.
@@ -30,3 +30,10 @@ worker:
 redis:
   tag: 4.0.9
   usePassword: false
+
+db:
+  cloudsql:
+    instanceConnectionName: mdzhang-dev:us-central1:mz-climgrid-2
+    secrets:
+      credentials:
+        name: cloudsql-instance-credentials

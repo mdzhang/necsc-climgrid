@@ -63,4 +63,39 @@ spec:
             initialDelaySeconds: 30
             periodSeconds: 10
           env:
-            {{- template "postalservice.env" . }}
+            - name: TARBALL_URI
+              value: ftp://ftp.ncdc.noaa.gov/pub/data/climgrid/
+            - name: REDIS_URI
+              value: redis://$({{ .Values.redis.fullnameOverride | upper | replace "-" "_" }}_SERVICE_HOST):6379/0
+            - name: DATA_URI
+              value: gs://climgrid-data-2018-04/climgrid/pnt/
+            - name: PG_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.db.cloudsql.secrets.credentials.name }}
+                  key: username
+            - name: PG_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.db.cloudsql.secrets.credentials.name }}
+                  key: password
+            - name: POSTGRESQL_URI
+              # Because the proxy runs in a second container in the same pod,
+              # it appears to application as localhost, so use 127.0.0.1:5432 to connect to it.
+              value: postgresql+psycopg2://$(PG_USER):$(PG_PASSWORD)@127.0.0.1:5432/precipitation
+        - name: cloudsql-proxy
+          image: gcr.io/cloudsql-docker/gce-proxy:1.11
+          command: ["/cloud_sql_proxy",
+                    "-instances={{ .Values.db.cloudsql.instanceConnectionName }}=tcp:5432",
+                    "-credential_file=/secrets/cloudsql/credentials.json"]
+          volumeMounts:
+            - name: cloudsql-instance-credentials
+              mountPath: /secrets/cloudsql
+              readOnly: true
+          ports:
+            - containerPort: 5432
+              protocol: TCP
+      volumes:
+        - name: cloudsql-instance-credentials
+          secret:
+            secretName: {{ .Values.db.cloudsql.secrets.credentials.name }}

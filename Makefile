@@ -60,12 +60,17 @@ docker-build:
 		--build-arg "commit=${CI_BUILD_REF}" \
 		.
 
+docker-publish:
+	docker push ${CONTAINER_NAME_BASE}:${CI_BUILD_REF}
+	docker push ${CONTAINER_NAME_BASE}:latest
+
 ###################################
 # Helm/Kubernetes commands
 ##################################
 
 CI_BUILD_SHORT_REF ?= $(shell git rev-parse --short HEAD)
 ENVIRONMENT ?= development
+RELEASE_NAME = ${APP_NAME}-${CI_BUILD_SHORT_REF}
 
 gcloud-publish:
 	gcloud docker -- push ${CONTAINER_NAME_BASE}:${CI_BUILD_REF}
@@ -73,20 +78,18 @@ gcloud-publish:
 
 helm-install:
 	helm install \
-	  --name=${APP_NAME}-${ENVIRONMENT}-${CI_BUILD_SHORT_REF} \
-		--namespace=${ENVIRONMENT} \
+	  --name=${RELEASE_NAME}\
+		--namespace=${APP_NAME} \
 		--set commit=${CI_BUILD_REF} \
-		--set environment=${ENVIRONMENT} \
 		--set image.tag=${CI_BUILD_REF} \
 		--set redis.fullnameOverride=${APP_NAME}-redis-${CI_BUILD_REF} \
 		./ops/charts/${APP_NAME}
 
 helm-upgrade:
-	helm upgrade ${APP_NAME}-${ENVIRONMENT}-${CI_BUILD_SHORT_REF} \
-		--namespace=${ENVIRONMENT} \
+	helm upgrade ${RELEASE_NAME} \
+		--namespace=${APP_NAME} \
 		--recreate-pods \
 		--set commit=${CI_BUILD_REF} \
-		--set environment=${ENVIRONMENT} \
 		--set image.tag=${CI_BUILD_REF} \
 		--set redis.fullnameOverride=${APP_NAME}-redis-${CI_BUILD_REF} \
 		./ops/charts/${APP_NAME}
@@ -95,7 +98,7 @@ helm-drop-all:
 	helm ls | tail -n+2 | awk '{print $$1}' | xargs helm delete
 
 helm-status:
-	helm status ${APP_NAME}-${ENVIRONMENT}-${CI_BUILD_SHORT_REF}
+	helm status ${RELEASE_NAME}
 
 helm-delete:
-	helm delete ${APP_NAME}-${ENVIRONMENT}-${CI_BUILD_SHORT_REF}
+	helm delete --purge ${RELEASE_NAME}
