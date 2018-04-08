@@ -150,7 +150,7 @@ def load_host_file_to_df(filepath: str) -> pd.DataFrame:
     :param filepath: path to pnt file on localhost
     """
     fname = os.path.basename(filepath)
-    num, metric, _, _ = fname.split('.')
+    num, metric, region, _ = fname.split('.')
     year, month = int(num[:4]), int(num[-2:])
 
     df = pd.read_csv(
@@ -161,6 +161,7 @@ def load_host_file_to_df(filepath: str) -> pd.DataFrame:
     df['month'] = month
     df['year'] = year
     df['metric'] = metric
+    df['region'] = region
     return df
 
 
@@ -170,6 +171,24 @@ def copy_df_to_sql_store(df: pd.DataFrame) -> None:
     :param df: as returned by `load_host_file_to_df`; dataframe with
         month/year/metric/lat/long/measurement columns
     """
+    month = df['month'][0]
+    year = df['year'][0]
+    metric = df['metric'][0]
+    region = df['region'][0]
+
+    sql = sa.text("""
+    select count(*) from precipitation
+    where month = {} and year = {} and metric = '{}' and region = '{}';
+    """.format(month, year, metric, region))
+    result = engine.execute(sql)
+    cnt = list(result)[0][0]
+
+    if cnt > 0:
+        print('Already have results in db for '
+              '[month={}, year={}, metric={}, region={}]. '
+              'Not updating database'.format(month, year, metric, region))
+        return
+
     print('Writing dataframe to db...')
     # to_sql is slow so stream csv
     output = io.StringIO()
@@ -262,6 +281,7 @@ def db_setup() -> None:
         month = sa.Column(sa.Integer, primary_key=True)
         year = sa.Column(sa.Integer, primary_key=True)
         metric = sa.Column(sa.String, primary_key=True)
+        region = sa.Column(sa.String)
 
     try:
         Base.metadata.create_all(engine)
