@@ -8,10 +8,13 @@ import pandas as pd
 import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declarative_base
 
-db_path = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), 'data', 'data.db')
+DATA_PATH = os.getenv('DATA_PATH',
+                      os.path.join(
+                          os.path.dirname(os.path.abspath(__file__)), 'data'))
 
+db_path = os.path.join(DATA_PATH, 'data.db')
 SQLITE_DB_URI = 'sqlite:///{}'.format(db_path)
+
 POSTGRESQL_DB_URI = ('postgresql+psycopg2://climgrid:climgrid'
                      '@localhost:5432/precipitation')
 SQLALCHEMY_DB_URI = os.getenv('SQLALCHEMY_DB_URI', POSTGRESQL_DB_URI)
@@ -50,13 +53,14 @@ def db_setup():
 
 def unzip_files():
     """Unzip tarballs in ./data dir to ./data/unzipped"""
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
-    pattern = os.path.join(path, '*.tar.gz')
+    path = os.path.join(DATA_PATH)
+    pattern = os.path.join(DATA_PATH, '*.tar.gz')
     files = glob.glob(pattern)
 
     extract_path = os.path.join(path, 'unzipped')
 
     for fname in files:
+        print('Extracting {}...'.format(os.path.basename(fname)))
         tar = tarfile.open(fname, "r:gz")
         tar.extractall(path=extract_path)
         tar.close()
@@ -103,15 +107,13 @@ def load_to_store(filepath):
 
 def load_all_file_contents():
     """List out and enqueue files to load to db"""
-    path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), 'data', 'unzipped')
+    path = os.path.join(DATA_PATH, 'unzipped')
     pattern = os.path.join(path, '*.pnt')
     files = glob.glob(pattern)
 
     for filepath in files:
         print('Loading {}...'.format(os.path.basename(filepath)))
-        write_to_store(load_file_content(filepath))
-        # load_to_store.apply_async((filepath, ))
+        load_to_store.apply_async((filepath, ))
 
 
 if __name__ == '__main__':
