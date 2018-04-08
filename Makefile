@@ -5,7 +5,7 @@ workers-stop:
 	./env/bin/celery multi stopwait 4 -A pd_convert -l info
 
 run:
-	time ./env/bin/python3 pd_convert.py
+	time ./env/bin/python3 climgrid.py
 
 DB_NAME='precipitation'
 DB_USER='climgrid'

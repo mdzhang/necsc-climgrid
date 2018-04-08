@@ -1,16 +1,17 @@
 import io
+import ftplib
 import os
 import glob
 import tarfile
+from urllib.parse import urlparse
 
 from celery import Celery
 import pandas as pd
 import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declarative_base
 
-DATA_PATH = os.getenv('DATA_PATH',
-                      os.path.join(
-                          os.path.dirname(os.path.abspath(__file__)), 'data'))
+DATA_PATH = os.getenv('DATA_PATH', 'file://{}'.format(
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')))
 
 db_path = os.path.join(DATA_PATH, 'data.db')
 SQLITE_DB_URI = 'sqlite:///{}'.format(db_path)
@@ -25,7 +26,7 @@ CELERY_BROKER_BACKEND = os.getenv('CELERY_BROKER_BACKEND',
 engine = sa.create_engine(SQLALCHEMY_DB_URI)
 
 app = Celery(
-    'pd_convert',
+    'climgrid',
     broker=CELERY_BROKER_BACKEND,
     result_backend=CELERY_RESULTS_BACKEND)
 
@@ -116,12 +117,28 @@ def load_all_file_contents():
         load_to_store.apply_async((filepath, ))
 
 
+def list_tarballs():
+    path = os.path.join(DATA_PATH)
+
+    uri = urlparse(path)
+    if uri.scheme == 'ftp':
+        ftp = ftplib.FTP(uri.netloc)
+        ftp.login()  # user anonymous, passwd anonymous@
+        for f in ftp.nlst(uri.path):
+            yield f
+    elif uri.scheme == 'file':
+        pattern = os.path.join(uri.path, '*.tar.gz')
+        files = glob.glob(pattern)
+        for f in files:
+            yield f
+    else:
+        raise ValueError('Cannot list tarballs in path: "{}"'.format(path))
+
+
 if __name__ == '__main__':
-    unzip_files()
-    print('Finished unzipping')
-
+    print('Setting up database...')
     db_setup()
-    print('Finished db setup')
 
-    load_all_file_contents()
-    print('Finished')
+    print('Listing tarballs...')
+    for tarball in list_tarballs():
+        print(tarball)
