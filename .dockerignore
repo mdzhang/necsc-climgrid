@@ -1,0 +1,8 @@
+env/
+data/
+*.pid
+*.log
+*.json
+__pycache__/
+.envrc
+ops/

@@ -1,0 +1,32 @@
+---
+## Climgrid image.
+##
+image:
+  registry: localhost:4444
+  repository: postalservice
+  tag: "latest"
+
+## Configuration values for Climgrid Worker components.
+##
+worker:
+  component: worker
+  cmd: celery multi -A climgrid -l info
+
+  ## Number of replicas.
+  ##
+  replicas: 1
+
+  ## Configure resource requests and limits.
+  ## ref: https://kubernetes.io/docs/user-guide/compute-resources/
+  ##
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "512Mi"
+
+## Configuration values for the redis dependency.
+## ref: https://github.com/kubernetes/charts/blob/master/stable/redis/README.md
+##
+redis:
+  tag: 4.0.9
+  usePassword: false

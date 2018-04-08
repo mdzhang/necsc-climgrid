@@ -1,0 +1,14 @@
+---
+name: climgrid
+version: 0.0.1
+description: workers for processing climgrid data
+appVersion: 0.0.0
+keywords:
+  - climgrid
+home: https://github.com/mdzhang/necsc-climgrid/
+sources:
+  - https://github.com/mdzhang/necsc-climgrid/
+maintainers:
+  - name: Michelle D Zhang
+    email: zhang.michelle.d@gmail.com
+engine: gotpl

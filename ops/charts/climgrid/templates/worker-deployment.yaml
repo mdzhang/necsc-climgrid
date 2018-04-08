@@ -1,0 +1,66 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: "{{ .Chart.Name }}-{{ .Values.worker.component }}-{{ .Values.commit }}"
+  labels:
+    component: {{ .Values.worker.component }}
+    {{- template "labels.common" . }}
+  annotations:
+    {{- template "annotations.common" . }}
+spec:
+  replicas: {{ .Values.worker.replicas }}
+  template:
+    metadata:
+      labels:
+        component: {{ .Values.worker.component }}
+        {{- include "labels.common" . | indent 4 }}
+      annotations:
+        {{- include "annotations.common" . | indent 4 }}
+    spec:
+      # mdzhang: Watch https://github.com/celery/celery/issues/4213
+      #          for updates on an official Helm Celery chart
+      containers:
+        - name: {{ .Chart.Name }}-{{ .Values.worker.component }}
+          image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: Always
+          command:
+            - "/usr/bin/celery"
+          args:
+            - "worker"
+            - "-A"
+            - "climgrid"
+            - "--loglevel=info"
+          ports:
+            - containerPort: 8793
+              protocol: TCP
+          livenessProbe:
+            exec:
+              command:
+                - "/usr/bin/celery"
+              args:
+                - "status"
+                - "-A"
+                - "climgrid"
+                - "|"
+                - "grep"
+                - "-o"
+                - "OK"
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - "/usr/bin/celery"
+              args:
+                - "status"
+                - "-A"
+                - "climgrid"
+                - "|"
+                - "grep"
+                - "-o"
+                - "OK"
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          env:
+            {{- template "postalservice.env" . }}
