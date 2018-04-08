@@ -10,8 +10,10 @@ from sqlalchemy.ext.declarative import declarative_base
 db_path = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), 'data', 'data.db')
 
-SQLALCHEMY_DB_URI = os.getenv('SQLALCHEMY_DB_URI',
-                              'sqlite:///{}'.format(db_path))
+SQLITE_DB_URI = 'sqlite:///{}'.format(db_path)
+POSTGRESQL_DB_URI = ('postgresql+psycopg2://climgrid:climgrid'
+                     '@localhost:5432/precipitation')
+SQLALCHEMY_DB_URI = os.getenv('SQLALCHEMY_DB_URI', POSTGRESQL_DB_URI)
 CELERY_RESULTS_BACKEND = os.getenv('CELERY_BROKER_BACKEND',
                                    'redis://localhost:6379/0')
 CELERY_BROKER_BACKEND = os.getenv('CELERY_BROKER_BACKEND',
@@ -79,7 +81,11 @@ def load_file_content(filepath):
 def write_to_store(df):
     """Write pandas dataframe to a sql db"""
     return df.to_sql(
-        name='precipitation', con=engine, if_exists='append', index=False)
+        name='precipitation',
+        con=engine,
+        if_exists='append',
+        index=False,
+        chunksize=1000)
 
 
 @app.task
@@ -94,13 +100,18 @@ def load_all_file_contents():
     pattern = os.path.join(path, '*.pnt')
     files = glob.glob(pattern)
 
-    for fname in files:
-        load_to_store.apply_async((fname, ))
+    for filepath in files:
+        print('Loading {}...'.format(os.path.basename(filepath)))
+        write_to_store(load_file_content(filepath))
+        # load_to_store.apply_async((filepath, ))
 
 
 if __name__ == '__main__':
     unzip_files()
+    print('Finished unzipping')
 
     db_setup()
+    print('Finished db setup')
 
     load_all_file_contents()
+    print('Finished')
