@@ -1,3 +1,4 @@
+import io
 import os
 import glob
 import tarfile
@@ -80,12 +81,19 @@ def load_file_content(filepath):
 
 def write_to_store(df):
     """Write pandas dataframe to a sql db"""
-    return df.to_sql(
-        name='precipitation',
-        con=engine,
-        if_exists='append',
-        index=False,
-        chunksize=1000)
+    print('Writing dataframe to db...')
+    # to_sql is slow so stream csv
+    output = io.StringIO()
+    df.to_csv(output, sep='\t', header=False, index=False)
+    output.seek(0)
+
+    connection = engine.raw_connection()
+    try:
+        cur = connection.cursor()
+        cur.copy_from(output, 'precipitation', null="")
+        connection.commit()
+    finally:
+        cur.close()
 
 
 @app.task
