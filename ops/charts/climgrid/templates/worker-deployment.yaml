@@ -83,6 +83,8 @@ spec:
               # Because the proxy runs in a second container in the same pod,
               # it appears to application as localhost, so use 127.0.0.1:5432 to connect to it.
               value: postgresql+psycopg2://$(PG_USER):$(PG_PASSWORD)@127.0.0.1:5432/precipitation
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /etc/opt/climgrid/credentials.json
         - name: cloudsql-proxy
           image: gcr.io/cloudsql-docker/gce-proxy:1.11
           command: ["/cloud_sql_proxy",
@@ -92,6 +94,8 @@ spec:
             - name: cloudsql-instance-credentials
               mountPath: /secrets/cloudsql
               readOnly: true
+            - name: cloudstorage-credentials
+              mountPath: /etc/opt/climgrid
           ports:
             - containerPort: 5432
               protocol: TCP
@@ -99,3 +103,9 @@ spec:
         - name: cloudsql-instance-credentials
           secret:
             secretName: cloudsql-instance-credentials
+        - name: cloudstorage-credentials
+          configMap:
+            name: cloudstorage-credentials
+            items:
+              - key: credentials.json
+                path: credentials.json

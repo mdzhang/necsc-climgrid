@@ -50,6 +50,9 @@ def download_file_from_gcs(src_uri: str, target_path: str) -> str:
     """See download_uri_to_host.
 
     This is just Google Cloud Storage specific.
+
+    $GOOGLE_APPLICATION_CREDENTIALS must be set in the env and point to a
+    valid JSON credentials file
     """
     uri = urlparse(src_uri)
     bucket_name = uri.netloc
@@ -102,6 +105,9 @@ def upload_file_to_gcs(src_path: str, target_uri: str) -> str:
     """See upload_host_file_to_store.
 
     This is just Google Cloud Storage specific.
+
+    $GOOGLE_APPLICATION_CREDENTIALS must be set in the env and point to a
+    valid JSON credentials file
     """
     uri = urlparse(target_uri)
     bucket_name = uri.netloc
@@ -318,17 +324,10 @@ def main():
     print('Setting up database...')
     db_setup()
 
-    max_count = 1
-    count = 0
     print('Listing tarballs...')
     for tarball in list_tarballs():
         print('Enqueuing tarball {}...'.format(tarball))
-        for uri in extract_tarball(tarball):
-            path = download_uri_to_host(uri)
-            copy_df_to_sql_store(load_host_file_to_df(path))
-        count += 1
-        if count >= max_count:
-            break
+        etl_tarball.apply_async((tarball, ))
 
     print('Enqueueing process finished. See workers for data processing '
           'progress.')
