@@ -34,34 +34,6 @@ spec:
           ports:
             - containerPort: 8793
               protocol: TCP
-          livenessProbe:
-            exec:
-              command:
-                - "/usr/local/bin/celery"
-              args:
-                - "status"
-                - "-A"
-                - "climgrid"
-                - "|"
-                - "grep"
-                - "-o"
-                - "OK"
-            initialDelaySeconds: 30
-            periodSeconds: 10
-          readinessProbe:
-            exec:
-              command:
-                - "/usr/local/bin/celery"
-              args:
-                - "status"
-                - "-A"
-                - "climgrid"
-                - "|"
-                - "grep"
-                - "-o"
-                - "OK"
-            initialDelaySeconds: 30
-            periodSeconds: 10
           env:
             - name: TARBALL_URI
               value: ftp://ftp.ncdc.noaa.gov/pub/data/climgrid/

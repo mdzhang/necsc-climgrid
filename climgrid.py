@@ -117,7 +117,12 @@ def upload_file_to_gcs(src_path: str, target_uri: str) -> str:
 
     try:
         blob = bucket.get_blob(blob_name)
-        print('{} already existed and was not overwritten.'.format(target_uri))
+        if blob is None:
+            blob = bucket.blob(blob_name)
+            blob.upload_from_filename(src_path)
+        else:
+            print('{} already existed and was not overwritten.'.format(
+                target_uri))
     except Exception as e:
         blob = bucket.blob(blob_name)
         blob.upload_from_filename(src_path)
