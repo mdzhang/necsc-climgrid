@@ -1,5 +1,5 @@
 from typing import Iterator
-from urllib.parse import urlparse, urljoin
+from urllib.parse import urlparse, urljoin, unquote
 from urllib.request import urlretrieve
 import ftplib
 import glob
@@ -25,8 +25,9 @@ DATA_URI = os.getenv('DATA_URI', os.path.join(TARBALL_URI, 'unzipped'))
 # where to store tarballs and pnt files temporarily
 TMP_DIR = os.getenv('TMP_DIR', os.path.expanduser('~/tmp/climgrid'))
 # pnt data will ultimately go to this postgres instance
-POSTGRESQL_URI = ('postgresql+psycopg2://climgrid:climgrid'
-                  '@localhost:5432/precipitation')
+POSTGRESQL_URI = os.getenv('POSTGRESQL_URI',
+                           ('postgresql+psycopg2://climgrid:climgrid'
+                            '@localhost:5432/precipitation'))
 # for task queue
 REDIS_URI = os.getenv('REDIS_URI', 'redis://localhost:6379/0')
 
@@ -322,6 +323,30 @@ def list_tarballs() -> Iterator[str]:
             yield urljoin('{}://{}'.format(uri.scheme, uri.netloc), f)
     else:
         raise ValueError('Cannot list tarballs at uri: "{}"'.format(uri))
+
+
+def list_pnts():
+    """List pnt files at DATA_URI
+    Supports DATA_URI that are URIs using the gs scheme
+
+    :yields: URIs to pnts
+    """
+    uri = urlparse(DATA_URI)
+
+    if uri.scheme == 'gs':
+        bucket_name = uri.netloc
+        storage_client = storage.Client()
+        bucket = storage_client.get_bucket(bucket_name)
+
+        blobs = bucket.list_blobs(max_results=5)
+        for blob in blobs:
+            if blob.size > 0:
+                blob_path = unquote(urlparse(blob.path).path.split('/')[-1])
+                blob_name = blob_path.lstrip(uri.path)
+                blob_uri = DATA_URI + blob_name
+                yield blob_uri
+    else:
+        raise ValueError('Cannot list pnt files at uri: "{}"'.format(DATA_URI))
 
 
 def main():
