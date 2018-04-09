@@ -84,6 +84,7 @@ helm-install:
 		--namespace=${APP_NAME} \
 		--set commit=${CI_BUILD_REF} \
 		--set image.tag=${CI_BUILD_REF} \
+		--set image.registry=${CONTAINER_REGISTRY} \
 		--set redis.fullnameOverride=${APP_NAME}-redis-${CI_BUILD_REF} \
 		./ops/charts/${APP_NAME}
 
@@ -93,6 +94,7 @@ helm-upgrade:
 		--recreate-pods \
 		--set commit=${CI_BUILD_REF} \
 		--set image.tag=${CI_BUILD_REF} \
+		--set image.registry=${CONTAINER_REGISTRY} \
 		--set redis.fullnameOverride=${APP_NAME}-redis-${CI_BUILD_REF} \
 		./ops/charts/${APP_NAME}
 

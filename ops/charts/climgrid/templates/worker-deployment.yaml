@@ -85,6 +85,9 @@ spec:
               value: postgresql+psycopg2://$(PG_USER):$(PG_PASSWORD)@127.0.0.1:5432/precipitation
             - name: GOOGLE_APPLICATION_CREDENTIALS
               value: /etc/opt/climgrid/credentials.json
+          volumeMounts:
+            - name: cloudstorage-credentials
+              mountPath: /etc/opt/climgrid
         - name: cloudsql-proxy
           image: gcr.io/cloudsql-docker/gce-proxy:1.11
           command: ["/cloud_sql_proxy",
@@ -94,8 +97,6 @@ spec:
             - name: cloudsql-instance-credentials
               mountPath: /secrets/cloudsql
               readOnly: true
-            - name: cloudstorage-credentials
-              mountPath: /etc/opt/climgrid
           ports:
             - containerPort: 5432
               protocol: TCP

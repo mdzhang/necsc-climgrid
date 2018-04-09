@@ -16,4 +16,3 @@ spec:
   selector:
     app: {{ .Chart.Name }}
     component: {{ .Values.worker.component }}
-    environment: {{ .Values.environment }}
