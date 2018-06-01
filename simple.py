@@ -43,8 +43,6 @@ def list_pnts():
 
 if __name__ == '__main__':
     fpath = os.path.join(DATA_PATH, '1972_2017.csv')
-    max_count = 2
-    count = 0
     with open(fpath, 'a') as f:
         for pnt in list_pnts():
             df = load_host_file_to_df(pnt)
